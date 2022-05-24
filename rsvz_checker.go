@@ -2,13 +2,14 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -30,6 +31,13 @@ type Code struct {
 	region     string
 }
 
+type ParsedResult struct {
+	Code     int    `json:"code"`
+	FullNum  string `json:"full_num"`
+	Operator string `json:"operator"`
+	Region   string `json:"region"`
+}
+
 type AppConfig struct {
 	RefreshInterval int      `mapstructure:"REFRESH_INTERVAL"`
 	BindPort        string   `mapstructure:"SERVER_PORT"`
@@ -37,11 +45,74 @@ type AppConfig struct {
 	URLs            []string `mapstructure:"URLS"`
 }
 
-func (h *phonesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// TODO check
-	w.Write([]byte("OK "))
-	str := strconv.Itoa(len(h.AllCodes))
-	zaplog.Infow("TEST Serve:" + str)
+func (h *phonesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if req.Method == "GET" {
+		zaplog.Infow("incoming request: " + req.URL.RawQuery)
+		num := req.URL.Query().Get("num")
+		field := req.URL.Query().Get("field")
+		num = strings.Replace(num, "+", "", 1)
+		code, phone, err := incomingPhoneProcessing(num)
+		if err != nil {
+			zaplog.Errorf("phone processing error: %s", err)
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = fmt.Fprintf(w, "Bad request!")
+			return
+		}
+		zaplog.Infof("Parced: code %d phone %d", code, phone)
+		res := &ParsedResult{
+			Code:    code,
+			FullNum: num,
+		}
+		for c := range h.AllCodes[code] {
+			if phone >= h.AllCodes[code][c].startRange && phone <= h.AllCodes[code][c].endRange {
+				zaplog.Infof("Found: %+v", h.AllCodes[code][c])
+				res.Operator = strings.Replace(h.AllCodes[code][c].pop, `"`, "", 3)
+				res.Region = h.AllCodes[code][c].region
+				break
+			}
+		}
+		if field == "" {
+			jsonResp, _ := json.Marshal(res)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			_, err = w.Write(jsonResp)
+		} else {
+			switch field {
+			case "code":
+				w.Write([]byte(strconv.Itoa(res.Code)))
+			case "full_name":
+				w.Write([]byte(res.FullNum))
+			case "operator":
+				w.Write([]byte(res.Operator))
+			case "region":
+				w.Write([]byte(res.Region))
+			default:
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte("Unsupported field"))
+			}
+		}
+		return
+	} else {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		_, _ = fmt.Fprintf(w, "Not supported method!")
+	}
+}
+
+func incomingPhoneProcessing(num string) (code int, phone int, err error) {
+	if len(num) == 10 {
+		num = "7" + num
+	}
+	if len(num) < 11 {
+		return 0, 0, errors.New("num too short")
+	}
+	tmp := num[1:4]
+	code, err = strconv.Atoi(tmp)
+	if err != nil {
+		return 0, 0, err
+	}
+	tmp = num[4:]
+	phone, err = strconv.Atoi(tmp)
+	return code, phone, err
 }
 
 func LoadConfiguration(path string) (config AppConfig, err error) {
@@ -155,7 +226,7 @@ func main() {
 	zaplog.Infow("Reading configuration: " + configPath)
 	cfg, err := LoadConfiguration(configPath)
 	if err != nil {
-		log.Println("ERROR: ", err)
+		zaplog.Errorf("ERROR: %s", err)
 		os.Exit(1)
 	}
 
@@ -165,7 +236,7 @@ func main() {
 
 	zaplog.Infof("Service is running on %s:%s", cfg.BindIP, cfg.BindPort)
 
-	http.Handle("/check", allPrefixes)
+	http.Handle("/check/", allPrefixes)
 	err = http.ListenAndServe(cfg.BindIP+":"+cfg.BindPort, nil)
 	if err != nil {
 		zaplog.Fatalf("Fatal error: %s", err)
