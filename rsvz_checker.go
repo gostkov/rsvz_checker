@@ -45,12 +45,18 @@ type AppConfig struct {
 	URLs            []string `mapstructure:"URLS"`
 }
 
+/*
+	TODO urlencode +
+Docker
+*/
+
 func (h *phonesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if req.Method == "GET" {
 		zaplog.Infow("incoming request: " + req.URL.RawQuery)
-		num := req.URL.Query().Get("num")
+
 		field := req.URL.Query().Get("field")
-		num = strings.Replace(num, "+", "", 1)
+		num := strings.Replace(req.URL.Query().Get("num"), "+", ``, -1)
+		num = strings.Replace(req.URL.Query().Get("num"), " ", ``, -1)
 		code, phone, err := incomingPhoneProcessing(num)
 		if err != nil {
 			zaplog.Errorf("phone processing error: %s", err)
