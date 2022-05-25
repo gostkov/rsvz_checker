@@ -1,5 +1,5 @@
 ## About
-`rsvz_checker` is an application which can help you receive information about the phone number by HTTP.
+`rsvz_checker` is an application which can help you receive information about the russian phone number by HTTP.
 It can be helpful if you're using Asterisk or some other softswitch.   
 
 ## How it works
