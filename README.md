@@ -1,6 +1,6 @@
 ## About
-`rsvz_checker` is an application which can help you receive information about the russian phone number by HTTP.
-It can be helpful if you're using Asterisk or some other softswitch.   
+`rsvz_checker` is an application which can help you receive information about the phone number by HTTP.
+It can be helpful if you're using Asterisk or some other softswitch.
 
 ## How it works
 Compile application with the golang compiler, deploy to your server, setup config file (env variables) and that's all.
@@ -32,7 +32,7 @@ curl "http://127.0.0.1:8081/check/?num=73512470001&field=operator"
 By default, application searing config file `rsvz_checker.env` in the current directory.
 If you want to change destination of configuration file, just use argument `--config`
 
-`SERVER_IP`, `SERVER_PORT` it means which ip address and port will listen application. 
+`SERVER_IP`, `SERVER_PORT` it means which ip address and port will listen application.
 
 `REFRESH_INTERVAL` this option set time interval after that rsvz_cheker will download new files from offical site.
 

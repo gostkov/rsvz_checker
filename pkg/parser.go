@@ -14,6 +14,25 @@ type ParsedResult struct {
 	Region   string `json:"region"`
 }
 
+var ErrorTooShortPhone = "слишком короткий номер"
+
+const MinPhoneLen = 10
+
+func ParseRawTgText(text string) (phone int, err error) {
+	var result strings.Builder
+	for i := 0; i < len(text); i++ {
+		ch := text[i]
+		if '0' <= ch && ch <= '9' {
+			result.WriteByte(ch)
+		}
+	}
+	phone, err = strconv.Atoi(result.String())
+	if len(result.String()) < MinPhoneLen {
+		return 0, errors.New(ErrorTooShortPhone)
+	}
+	return
+}
+
 func IncomingRFPhoneProcessing(num string) (result *ParsedResult, err error) {
 	tmp := strings.Replace(num, "+", ``, -1)
 	num = strings.Replace(tmp, " ", ``, -1)

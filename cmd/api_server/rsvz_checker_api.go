@@ -68,7 +68,7 @@ func LoadConfiguration(path string) (config AppConfig, err error) {
 	v.AutomaticEnv()
 	v.SetDefault("SERVER_IP", "127.0.0.1")
 	v.SetDefault("SERVER_PORT", "8080")
-	v.SetDefault("REFRESH_INTERVAL", 1)
+	v.SetDefault("REFRESH_INTERVAL", 60)
 	v.SetDefault("URLS", "http://opendata.digital.gov.ru/downloads/ABC-3xx.csv,http://opendata.digital.gov.ru/downloads/ABC-4xx.csv,http://opendata.digital.gov.ru/downloads/ABC-8xx.csv,http://opendata.digital.gov.ru/downloads/DEF-9xx.csv")
 	v.AddConfigPath(path)
 	v.SetConfigFile("rsvz_checker_api.env")
