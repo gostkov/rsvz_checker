@@ -2,6 +2,7 @@ package rsvz_checker
 
 import (
 	"bufio"
+	"crypto/tls"
 	"errors"
 	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
@@ -52,6 +53,7 @@ func (r *Registry) downloadFiles(urls []string) ([]string, error) {
 	for i, url := range urls {
 		func(idx int, url string) {
 			errGrp.Go(func() error {
+				http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 				resp, err := http.Get(url)
 				if err != nil {
 					return err
@@ -138,7 +140,8 @@ func (r *Registry) RegistryProcessing(urls []string, refreshInterval int, log *z
 		if len(files) == 0 {
 			files, err = r.downloadFiles(urls)
 			if err != nil {
-				log.Error("some files didn't download. Stop processing. Waiting next iteration")
+				log.Error("some files didn't download. Stop processing. Waiting next iteration.")
+				log.Error(err.Error())
 				time.Sleep(time.Minute * time.Duration(refreshInterval))
 				continue
 			}
