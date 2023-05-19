@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-const DirForTmpCsv = "./tmp/"
+const DirForTmpCsv = "/tmp/"
 
 type Registry struct {
 	AllCodes map[int][]Code
@@ -52,11 +52,6 @@ func (r *Registry) downloadFiles(urls []string) ([]string, error) {
 	for i, url := range urls {
 		func(idx int, url string) {
 			errGrp.Go(func() error {
-				out, err := os.Create(DirForTmpCsv + strconv.Itoa(idx) + "_data.csv")
-				if err != nil {
-					return err
-				}
-				defer out.Close()
 				resp, err := http.Get(url)
 				if err != nil {
 					return err
@@ -65,6 +60,11 @@ func (r *Registry) downloadFiles(urls []string) ([]string, error) {
 				if resp.StatusCode != 200 {
 					return errors.New("file not found " + url)
 				}
+				out, err := os.Create(DirForTmpCsv + strconv.Itoa(idx) + "_data.csv")
+				if err != nil {
+					return err
+				}
+				defer out.Close()
 				if _, err = io.Copy(out, resp.Body); err != nil {
 					return err
 				}

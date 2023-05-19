@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/spf13/pflag"
@@ -53,8 +52,9 @@ func (bs *BotService) runBotProcessing() error {
 				parsedResult.Operator, parsedResult.Region = bs.registry.SearchCodeByPrefixAndPhone(parsedResult.Code, parsedResult.Phone)
 				bs.log.Infof("Parced: code: %d, phone: %d, operator: %s, region: %s",
 					parsedResult.Code, parsedResult.Phone, parsedResult.Operator, parsedResult.Region)
-				jsonResult, _ := json.Marshal(parsedResult)
-				textForSend = "По номеру: " + strconv.Itoa(phone) + " найдены следующие данные: " + string(jsonResult)
+				textForSend = "По номеру: " + strconv.Itoa(phone) + " найдены следующие данные:\n" + "Код: " +
+					strconv.Itoa(parsedResult.Code) + "\nНомер: " + strconv.Itoa(parsedResult.Phone) + "\nОператор: " + parsedResult.Operator +
+					"\nРегион: " + parsedResult.Region
 			}
 		}
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, textForSend)
@@ -88,12 +88,11 @@ func prepareBotService(configPath string) (*BotService, error) {
 func LoadConfiguration(path string) (config BotService, err error) {
 	v := viper.New()
 	v.AutomaticEnv()
-	v.SetDefault("BOT_TOKEN", "")
+	v.SetDefault("BOT_TOKEN", "6118716272:AAFNDSJu0xTfqmpMO-P_Q6VNWDIjkC-5bAs")
 	v.SetDefault("BOT_DEBUG", false)
 	v.SetDefault("REFRESH_INTERVAL", 60)
 	v.SetDefault("URLS", "http://opendata.digital.gov.ru/downloads/ABC-3xx.csv,http://opendata.digital.gov.ru/downloads/ABC-4xx.csv,http://opendata.digital.gov.ru/downloads/ABC-8xx.csv,http://opendata.digital.gov.ru/downloads/DEF-9xx.csv")
-	v.AddConfigPath(path)
-	v.SetConfigFile("rsvz_checker_tg_bot.env")
+	v.SetConfigFile(path)
 	_ = v.ReadInConfig()
 	err = v.Unmarshal(&config)
 	return config, err
