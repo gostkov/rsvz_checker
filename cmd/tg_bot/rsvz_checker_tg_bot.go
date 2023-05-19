@@ -12,6 +12,7 @@ import (
 )
 
 const ErrorForParseText = "Не удалось распознать номер"
+const WelcomeMsg = "Можете написать номер телефона"
 
 type BotService struct {
 	BotToken        string   `mapstructure:"BOT_TOKEN"`
@@ -38,6 +39,11 @@ func (bs *BotService) runBotProcessing() error {
 			continue
 		}
 		receivedText = update.Message.Text
+		if receivedText == "/start" {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, WelcomeMsg)
+			_, _ = bs.Bot.Send(msg)
+			continue
+		}
 		userName = update.Message.Chat.UserName
 		bs.log.Infof("Received msg. Name: [%s] Text: %s", userName, receivedText)
 
