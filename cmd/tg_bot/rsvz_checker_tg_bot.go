@@ -88,7 +88,7 @@ func prepareBotService(configPath string) (*BotService, error) {
 func LoadConfiguration(path string) (config BotService, err error) {
 	v := viper.New()
 	v.AutomaticEnv()
-	v.SetDefault("BOT_TOKEN", "6118716272:AAFNDSJu0xTfqmpMO-P_Q6VNWDIjkC-5bAs")
+	v.SetDefault("BOT_TOKEN", "")
 	v.SetDefault("BOT_DEBUG", false)
 	v.SetDefault("REFRESH_INTERVAL", 60)
 	v.SetDefault("URLS", "http://opendata.digital.gov.ru/downloads/ABC-3xx.csv,http://opendata.digital.gov.ru/downloads/ABC-4xx.csv,http://opendata.digital.gov.ru/downloads/ABC-8xx.csv,http://opendata.digital.gov.ru/downloads/DEF-9xx.csv")
